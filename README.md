@@ -1,9 +1,4 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/your-username/your-repo/main/.github/logo-dark.svg">
-    <img width="120" src="https://i.ibb.co/PZvSHFgp/up-green-files-upload-file-icon-24-removebg-preview.png" alt="Logo">
-  </picture>
-</p>
+
 
 <h1 align="center">☁️ Cloud File Uploader</h1>
 

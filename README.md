@@ -67,7 +67,7 @@ SITE_URL=http://localhost:8080
 ### 3. Run
 
 ```bash
-python3 main.py
+python3 main.pygit commit -m "Merge remote main with local main"
 ```
 
 Open **http://localhost:8080** in your browser.

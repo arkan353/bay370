@@ -6,9 +6,12 @@ import uuid
 import hashlib
 import secrets
 import string
-
+import json
 import shortdb
 from shortdb import init_db, get_short_link
+import threading
+import fileDeleteTimer
+
 
 from bottle import (
     TEMPLATE_PATH,
@@ -457,11 +460,36 @@ def list_my_files():
 # Пуск
 # ─────────────────────────────────────────────
 
+with open("config.json", "r") as f:
+    config = json.load(f)
+
+def gen_basic_config():
+    return {
+        "file_7days_deleting_on": config.get("file_7days_deleting_on", False)
+    }
+
+if config.get("file_7days_deleting_on", False):
+    pass
+else:
+    threading.Thread(target=fileDeleteTimer.delete_old_files, args=(bucket_name, 7)).start()  # Запускаем удаление старых файлов в отдельном потоке
+
+public_config = gen_basic_config()
+def push_basic_config():
+    global public_config
+    public_config = gen_basic_config()
+    try:
+        with open("config.json", "w") as f:
+            json.dump(config, f)
+    except Exception as e:
+        print(f"Ошибка при сохранении конфигурации: {e}")
+
 if __name__ == "__main__":
     print("=" * 50)
     print("Загрузчик файлов в облако")
     print("=" * 50)
 
+    threading.Thread(target=fileDeleteTimer.delete_old_files, args=(s3.bucket_name, 7)).start()  # Запускаем удаление старых файлов в отдельном потоке
+    
     if not BUCKET_NAME:
         print("❌ Ошибка: имя хранилища не задано в .env файле")
     else:

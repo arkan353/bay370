@@ -1,6 +1,5 @@
 import logging
 import os
-import threading
 import dotenv
 import requests
 from botocore.exceptions import ClientError
@@ -274,7 +273,7 @@ if __name__ == "__main__":
     # Проверка подключения
     bucket_name = os.getenv("S3_BUCKIT_NAME")
 
-    threading.Thread(target=fileDeleteTimer.delete_old_files, args=(bucket_name, 7)).start()  # Запускаем удаление старых файлов в отдельном потоке
+    
     
     
     if bucket_name:

@@ -233,7 +233,8 @@ def favicon():
 # Загрузка через форму (браузер)
 # ─────────────────────────────────────────────
 
-
+#TODO: добавить удаление файлов из S3 через определённое время (через Celery или при загрузке новых файлов)
+#TODO: добавить проверку на размер файла и ограничить, чтобы не загружать слишком большие файлы (например, >4000 МБ)
 @route("/upload", method="POST")
 def upload_ui():
     session_id = _get_or_create_session()
@@ -266,8 +267,9 @@ def upload_ui():
         if ext:
             object_name += f".{ext}"
 
-        s3.upload_file(BUCKET_NAME, temp_path, object_name)
-
+        upld = s3.upload_file(BUCKET_NAME, temp_path, object_name)
+        if upld == 124:
+            return f"<h2 style='color:red'>❌ Файл слишком большой для загрузки</h2><p>Максимальный размер: 4000 МБ</p><a href='/'>Назад</a>"
         # Запоминаем в локальном хранилище
         file_id = file_store.add_file(session_id, original_name, object_name)
 

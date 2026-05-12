@@ -5,7 +5,9 @@ from datetime import datetime, timezone
 
 from sqlalchemy import String, Integer, DateTime, func, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
+import sqlProtect
 
+#TODO: добавить проверку на банворды а так же логирование ДБ
 
 # ── Базовый класс ──────────────────────────────────────────────────
 
@@ -43,8 +45,16 @@ def init_db():
 def _get_session() -> Session:
     return Session(_engine)
 
+# ── Проверка на запрещенные слова ───────────────────────────────────────
+def check_for_banned_words(text: str) -> bool:
+    """Проверить текст на наличие запрещённых слов."""
+    banned_words = sqlProtect.get_banned_words()
+    text_lower = text.lower()
+    return any(banned_word in text_lower for banned_word in banned_words)
 
 # ── Функции для работы со ссылками ─────────────────────────────────
+
+
 
 def create_short_link(
     original_url: str,
@@ -52,6 +62,8 @@ def create_short_link(
     password_hash: Optional[str] = None,
 ) -> Link:
     """Создать новую короткую ссылку."""
+    if check_for_banned_words(original_url):
+        raise ValueError("Original URL contains banned words.")
     link = Link(
         original_url=original_url,
         short_code=short_code,
@@ -67,12 +79,19 @@ def create_short_link(
 
 def get_short_link(short_code: str) -> Optional[Link]:
     """Получить ссылку по короткому коду."""
+    if check_for_banned_words(short_code):
+        raise ValueError("Short code contains banned words.")
+
     with _get_session() as session:
         return session.query(Link).filter(Link.short_code == short_code).first()
 
 
+
 def increment_clicks(short_code: str) -> Optional[Link]:
     """Увеличить счётчик переходов."""
+    if check_for_banned_words(short_code):
+        raise ValueError("Short code contains banned words.")
+
     with _get_session() as session:
         link = session.query(Link).filter(Link.short_code == short_code).first()
         if link:
@@ -84,12 +103,16 @@ def increment_clicks(short_code: str) -> Optional[Link]:
 
 def link_exists(short_code: str) -> bool:
     """Проверить, занят ли короткий код."""
+    if check_for_banned_words(short_code):
+        raise ValueError("Short code contains banned words.")
     with _get_session() as session:
         return session.query(Link).filter(Link.short_code == short_code).first() is not None
 
 
 def get_stats(short_code: str) -> Optional[dict]:
     """Получить статистику по ссылке."""
+    if check_for_banned_words(short_code):
+        raise ValueError("Short code contains banned words.")
     link = get_short_link(short_code)
     if not link:
         return None

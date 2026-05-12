@@ -12,6 +12,7 @@
   <a href="#-features">Features</a> •
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-api-usage">API Usage</a> •
+  <a href="#-url-shortener-api">URL Shortener API</a> •
   <a href="#-project-structure">Project Structure</a>
 </p>
 
@@ -30,6 +31,8 @@
 | 📥 **wget‑Friendly** | Download links work with `wget`, `curl`, or any browser |
 | ☁️ **Cloud Storage** | Files are stored securely in S3‑compatible cloud |
 | ⏱️ **1‑Hour Links** | Download URLs expire after 1 hour for security |
+| 🔐 **URL Shortener** | Create short, customizable links with optional password protection |
+| 📊 **Click Statistics** | Track how many times each short link was opened |
 
 ---
 
@@ -104,6 +107,65 @@ curl -F "file=@photo.jpg" -F "name=myphoto.jpg" http://localhost:8080/api/upload
 
 ---
 
+<h2>🔗 URL Shortener API</h2>
+
+### Create a short link via `curl`
+
+```bash
+curl -X POST http://localhost:8080/api/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/very/long/url"}'
+```
+
+#### Response
+
+```json
+{
+  "ok": true,
+  "short_url": "http://localhost:8080/go/Ab3xYz",
+  "short_code": "Ab3xYz",
+  "original_url": "https://example.com/very/long/url",
+  "is_protected": false
+}
+```
+
+### Custom short code
+
+```bash
+curl -X POST http://localhost:8080/api/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "code": "my-link"}'
+```
+
+### Password‑protected (private) link
+
+```bash
+curl -X POST http://localhost:8080/api/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "password": "secret123"}'
+```
+
+### Get link statistics
+
+```bash
+curl http://localhost:8080/link/Ab3xYz/stats
+```
+
+#### Response
+
+```json
+{
+  "ok": true,
+  "original_url": "https://example.com/very/long/url",
+  "short_code": "Ab3xYz",
+  "clicks": 42,
+  "created_at": "2025-01-01T00:00:00+00:00",
+  "is_protected": false
+}
+```
+
+---
+
 <h2>📁 Project Structure</h2>
 
 ```
@@ -111,7 +173,9 @@ bay370/
 ├── main.py              # Web server — routes, sessions, pages
 ├── s3.py                # Cloud storage client (S3‑compatible)
 ├── file_store.py        # Local JSON store (session → files mapping)
+├── shortdb.py           # Short link database (SQLAlchemy + SQLite)
 ├── upload.html          # Web interface template
+├── password_prompt.html # Password entry page for private links
 ├── style.css            # Styles
 ├── .env                 # ⚠️ Configuration (do not commit!)
 └── .gitignore
@@ -144,10 +208,10 @@ MIT
 
 <br>
 
-# ☁️ Загрузчик файлов в облако
+# ☁️ Загрузчик файлов в облако + сокращатель ссылок
 
 <p align="center">
-  <strong>Загружайте файлы в облако и получайте ссылку для скачивания за секунду</strong>
+  <strong>Загружайте файлы в облако и сокращайте ссылки — всё в одном сервисе</strong>
   <br>
   <sub>Веб-интерфейс · REST API · Приватность по сессиям</sub>
 </p>
@@ -156,6 +220,7 @@ MIT
   <a href="#-возможности">Возможности</a> •
   <a href="#-быстрый-старт">Быстрый старт</a> •
   <a href="#-использование-api">Использование API</a> •
+  <a href="#-api-сокращения-ссылок">API сокращения ссылок</a> •
   <a href="#-структура-проекта">Структура проекта</a>
 </p>
 
@@ -172,6 +237,8 @@ MIT
 | 📥 **wget-дружелюбно** | Ссылки работают с `wget`, `curl` и любым браузером |
 | ☁️ **Облачное хранилище** | Файлы хранятся в S3-совместимом облаке |
 | ⏱️ **Ссылки на 1 час** | Временные ссылки автоматически истекают |
+| 🔐 **Сокращение ссылок** | Создавайте короткие ссылки с кастомным кодом и паролем |
+| 📊 **Статистика переходов** | Отслеживайте количество кликов по ссылке |
 
 ---
 
@@ -245,6 +312,65 @@ curl -F "file=@photo.jpg" -F "name=myphoto.jpg" http://localhost:8080/api/upload
 
 ---
 
+<h2>🔗 API сокращения ссылок</h2>
+
+### Создать короткую ссылку
+
+```bash
+curl -X POST http://localhost:8080/api/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/very/long/url"}'
+```
+
+#### Ответ
+
+```json
+{
+  "ok": true,
+  "short_url": "http://localhost:8080/go/Ab3xYz",
+  "short_code": "Ab3xYz",
+  "original_url": "https://example.com/very/long/url",
+  "is_protected": false
+}
+```
+
+### Свой короткий код
+
+```bash
+curl -X POST http://localhost:8080/api/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "code": "my-link"}'
+```
+
+### Приватная ссылка (с паролем)
+
+```bash
+curl -X POST http://localhost:8080/api/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com", "password": "secret123"}'
+```
+
+### Статистика по ссылке
+
+```bash
+curl http://localhost:8080/link/Ab3xYz/stats
+```
+
+#### Ответ
+
+```json
+{
+  "ok": true,
+  "original_url": "https://example.com/very/long/url",
+  "short_code": "Ab3xYz",
+  "clicks": 42,
+  "created_at": "2025-01-01T00:00:00+00:00",
+  "is_protected": false
+}
+```
+
+---
+
 <h2>📁 Структура проекта</h2>
 
 ```
@@ -252,7 +378,9 @@ bay370/
 ├── main.py              # Веб-сервер — маршруты, сессии, страницы
 ├── s3.py                # Клиент облачного хранилища (S3‑совместимый)
 ├── file_store.py        # Локальное JSON-хранилище (сессия → файлы)
+├── shortdb.py           # База данных коротких ссылок (SQLAlchemy + SQLite)
 ├── upload.html          # Шаблон веб-интерфейса
+├── password_prompt.html # Страница ввода пароля для приватных ссылок
 ├── style.css            # Стили
 ├── .env                 # ⚠️ Настройки (не коммитить!)
 └── .gitignore

@@ -321,6 +321,11 @@ body {
     font-size: 12px;
 }
 
+.devs-guide{
+    margin-top: 45px;
+    margin-bottom: 0;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
     .header-content {

@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="stylesheet" href="/static/style.css" />
-        <title>Загрузка файлов в облако</title>
+        <title>Загрузчик файлов и сокращение ссылок</title>
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -51,6 +51,7 @@
                 <div class="header-links">
                     <a href="/" class="header-link">Загрузить</a>
                     <a href="/files" class="header-link">Мои файлы</a>
+                    <a href="#shortener" class="header-link">Сократить ссылку</a>
                 </div>
             </div>
         </div>
@@ -235,6 +236,74 @@
                 <div id="result" class="result-container"></div>
             </div>
 
+            <!-- ═══════════════════════════════════ -->
+            <!-- Сокращение ссылок                   -->
+            <!-- ═══════════════════════════════════ -->
+
+            <div class="upl-card" style="margin-top: 30px;" id="shortener">
+                <div class="card-header">
+                    <div class="icon-circle">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 13C10.4295 13.5741 10.9774 14.0491 11.6066 14.3929C12.2357 14.7367 12.9315 14.9411 13.6467 14.9923C14.3618 15.0435 15.0796 14.9403 15.7513 14.6897C16.4231 14.4392 17.0331 14.047 17.54 13.54L20.54 10.54C21.4508 9.59695 21.9548 8.33394 21.9434 7.02296C21.932 5.71198 21.4061 4.45791 20.4791 3.5309C19.5521 2.60389 18.298 2.07799 16.987 2.0666C15.6761 2.05521 14.413 2.55921 13.47 3.47L11.75 5.18" stroke="#06ad00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 11C13.5705 10.4259 13.0226 9.95087 12.3934 9.60707C11.7643 9.26327 11.0685 9.05886 10.3533 9.00766C9.63818 8.95646 8.92038 9.05966 8.24865 9.31025C7.57692 9.56083 6.96693 9.95299 6.46 10.46L3.46 13.46C2.54921 14.403 2.04521 15.6661 2.0566 16.977C2.06799 18.288 2.59389 19.5421 3.5209 20.4691C4.44791 21.3961 5.70198 21.922 7.01296 21.9334C8.32394 21.9448 9.58695 21.4408 10.53 20.53L12.24 18.82" stroke="#06ad00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h2>Сократить ссылку</h2>
+                    <p class="subtitle">
+                        Создайте короткую ссылку для любого URL
+                    </p>
+                </div>
+
+                <form action="/create_link" method="POST" id="shortenForm">
+                    <div class="form-group">
+                        <label for="original_url">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10 13C10.4295 13.5741 10.9774 14.0491 11.6066 14.3929C12.2357 14.7367 12.9315 14.9411 13.6467 14.9923C14.3618 15.0435 15.0796 14.9403 15.7513 14.6897C16.4231 14.4392 17.0331 14.047 17.54 13.54L20.54 10.54C21.4508 9.59695 21.9548 8.33394 21.9434 7.02296C21.932 5.71198 21.4061 4.45791 20.4791 3.5309C19.5521 2.60389 18.298 2.07799 16.987 2.0666C15.6761 2.05521 14.413 2.55921 13.47 3.47L11.75 5.18" stroke="#3b3b3b" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M14 11C13.5705 10.4259 13.0226 9.95087 12.3934 9.60707C11.7643 9.26327 11.0685 9.05886 10.3533 9.00766C9.63818 8.95646 8.92038 9.05966 8.24865 9.31025C7.57692 9.56083 6.96693 9.95299 6.46 10.46L3.46 13.46C2.54921 14.403 2.04521 15.6661 2.0566 16.977C2.06799 18.288 2.59389 19.5421 3.5209 20.4691C4.44791 21.3961 5.70198 21.922 7.01296 21.9334C8.32394 21.9448 9.58695 21.4408 10.53 20.53L12.24 18.82" stroke="#3b3b3b" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Длинная ссылка
+                        </label>
+                        <input type="url" id="original_url" name="original_url"
+                               placeholder="https://example.com/very/long/url" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="custom_code">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke="#3b3b3b"/>
+                                <path d="M9 8L13 12L9 16" stroke="#3b3b3b" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Свой код (необязательно)
+                        </label>
+                        <input type="text" id="custom_code" name="custom_code"
+                               placeholder="my-link (только буквы и цифры)" maxlength="10"
+                               pattern="[A-Za-z0-9]+" title="Только латинские буквы и цифры">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shorten_password">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" stroke="#3b3b3b"/>
+                                <path d="M7 11V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V11" stroke="#3b3b3b" stroke-linecap="round"/>
+                            </svg>
+                            Пароль (для приватной ссылки)
+                        </label>
+                        <input type="password" id="shorten_password" name="password"
+                               placeholder="Оставьте пустым для публичной ссылки">
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="shortenBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 13C10.4295 13.5741 10.9774 14.0491 11.6066 14.3929C12.2357 14.7367 12.9315 14.9411 13.6467 14.9923C14.3618 15.0435 15.0796 14.9403 15.7513 14.6897C16.4231 14.4392 17.0331 14.047 17.54 13.54L20.54 10.54C21.4508 9.59695 21.9548 8.33394 21.9434 7.02296C21.932 5.71198 21.4061 4.45791 20.4791 3.5309C19.5521 2.60389 18.298 2.07799 16.987 2.0666C15.6761 2.05521 14.413 2.55921 13.47 3.47L11.75 5.18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 11C13.5705 10.4259 13.0226 9.95087 12.3934 9.60707C11.7643 9.26327 11.0685 9.05886 10.3533 9.00766C9.63818 8.95646 8.92038 9.05966 8.24865 9.31025C7.57692 9.56083 6.96693 9.95299 6.46 10.46L3.46 13.46C2.54921 14.403 2.04521 15.6661 2.0566 16.977C2.06799 18.288 2.59389 19.5421 3.5209 20.4691C4.44791 21.3961 5.70198 21.922 7.01296 21.9334C8.32394 21.9448 9.58695 21.4408 10.53 20.53L12.24 18.82" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Сократить ссылку
+                    </button>
+                </form>
+
+                <div id="shortenResult" class="result-container"></div>
+            </div>
+
             <div class="info-cards">
                 <div class="info-card">
                     <div class="info-icon">☁️</div>
@@ -383,6 +452,53 @@
                     </ol>
                 </div>
             </div>
+
+            <!-- ═══════════════════════════════════ -->
+            <!-- Сокращение ссылок — гайд            -->
+            <!-- ═══════════════════════════════════ -->
+
+            <div class="upl-card devs-guide" style="margin-top: 30px;">
+                <div class="card-header">
+                    <h2 style="font-size: 22px">🔗 Сокращение ссылок через API</h2>
+                    <p class="subtitle">
+                        Создавайте короткие ссылки из терминала
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 25px">
+                    <h3 style="color: #3b3b3b; font-size: 16px; margin-bottom: 10px;">
+                        📤 Создать короткую ссылку
+                    </h3>
+                    <div style="background: #1e1e1e; color: #e0e0e0; padding: 16px; border-radius: 12px; font-family: monospace; font-size: 14px; overflow-x: auto; line-height: 1.6;">
+                        <span style="color: #888; user-select: none"># Простое сокращение</span><br>
+                        curl -X POST {{site_url}}/api/shorten \<br>
+                        &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                        &nbsp;&nbsp;-d '{"url": "https://example.com/very/long/url"}'<br><br>
+                        <span style="color: #888; user-select: none"># Со своим кодом</span><br>
+                        curl -X POST {{site_url}}/api/shorten \<br>
+                        &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                        &nbsp;&nbsp;-d '{"url": "https://example.com", "code": "my-link"}'<br><br>
+                        <span style="color: #888; user-select: none"># Приватная ссылка (с паролем)</span><br>
+                        curl -X POST {{site_url}}/api/shorten \<br>
+                        &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                        &nbsp;&nbsp;-d '{"url": "https://example.com", "password": "secret123"}'<br><br>
+                        <span style="color: #888; user-select: none"># Пример ответа:</span><br>
+                        <span style="color: #6a9955">{"ok": true, "short_url": "http://.../go/Ab3xYz", "short_code": "Ab3xYz", "original_url": "https://...", "is_protected": false}</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="color: #3b3b3b; font-size: 16px; margin-bottom: 10px;">
+                        📊 Статистика по ссылке
+                    </h3>
+                    <div style="background: #1e1e1e; color: #e0e0e0; padding: 16px; border-radius: 12px; font-family: monospace; font-size: 14px; overflow-x: auto; line-height: 1.6;">
+                        <span style="color: #888; user-select: none"># Получить статистику</span><br>
+                        curl {{site_url}}/link/Ab3xYz/stats<br><br>
+                        <span style="color: #888; user-select: none"># Пример ответа:</span><br>
+                        <span style="color: #6a9955">{"ok": true, "original_url": "https://...", "short_code": "Ab3xYz", "clicks": 42, "created_at": "2025-01-01T00:00:00+00:00", "is_protected": false}</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <script>
@@ -400,7 +516,7 @@
                 }
             });
 
-            // Обработка отправки формы
+            // Обработка отправки формы загрузки файлов
             document
                 .getElementById("uploadForm")
                 .addEventListener("submit", async function (e) {
@@ -424,6 +540,47 @@
 
                     try {
                         const response = await fetch("/upload", {
+                            method: "POST",
+                            body: formData,
+                        });
+
+                        const text = await response.text();
+                        resultDiv.innerHTML = text;
+                    } catch (error) {
+                        resultDiv.innerHTML = `
+                            <div class="error-message">
+                                <strong>❌ Ошибка:</strong> ${error.message}
+                            </div>
+                        `;
+                    } finally {
+                        submitBtn.innerHTML = originalBtnText;
+                        submitBtn.disabled = false;
+                    }
+                });
+
+            // Обработка формы сокращения ссылок (AJAX)
+            document
+                .getElementById("shortenForm")
+                .addEventListener("submit", async function (e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(this);
+                    const resultDiv = document.getElementById("shortenResult");
+                    const submitBtn = document.getElementById("shortenBtn");
+                    const originalBtnText = submitBtn.innerHTML;
+
+                    submitBtn.innerHTML = `
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" stroke="white"/>
+                            <path d="M12 6V12L16 14" stroke="white"/>
+                        </svg>
+                        Сокращение...
+                    `;
+                    submitBtn.disabled = true;
+                    resultDiv.innerHTML = '<div class="loading">⏳ Сокращаем ссылку...</div>';
+
+                    try {
+                        const response = await fetch("/create_link", {
                             method: "POST",
                             body: formData,
                         });

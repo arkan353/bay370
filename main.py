@@ -1,8 +1,14 @@
 # main.py — продакшен-версия
-
+import json
 import os
 import tempfile
 import uuid
+import hashlib
+import secrets
+import string
+
+import shortdb
+from shortdb import init_db, get_short_link
 
 from bottle import (
     TEMPLATE_PATH,
@@ -24,6 +30,9 @@ SITE_URL = os.getenv("SITE_URL", "http://localhost:8080").rstrip("/")
 
 SESSION_COOKIE = "session_id"
 DOWNLOAD_EXPIRES = 3600  # 1 час
+
+# ── Инициализация БД при старте ────────────────────────────────────
+init_db()
 
 
 def _get_or_create_session():
@@ -50,6 +59,169 @@ def index():
 @route("/static/<filename:path>")
 def serve_static(filename):
     return static_file(filename, root=os.path.dirname(os.path.abspath(__file__)))
+
+# ─────────────────────────────────────────────
+# Сокращение ссылок
+# ─────────────────────────────────────────────
+
+def _generate_short_code(length: int = 6) -> str:
+    """Сгенерировать случайный короткий код (буквы + цифры)."""
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+@route("/create_link", method="POST")
+def create_link():
+    _get_or_create_session()
+    original_url = request.forms.get("original_url", "").strip()
+    custom_code = request.forms.get("custom_code", "").strip()
+    password = request.forms.get("password")
+
+    if not original_url:
+        return "<h2 style='color:red'>❌ URL не указан</h2><a href='/'>Назад</a>"
+
+    # Проверяем / используем кастомный код
+    if custom_code:
+        short_code = custom_code[:10]
+        if shortdb.link_exists(short_code):
+            return f"""
+<h2 style='color:red'>❌ Короткий код «{short_code}» уже занят</h2>
+<p><a href='/'>Попробовать другой</a></p>"""
+    else:
+        # Генерируем уникальный код
+        for _ in range(10):
+            short_code = _generate_short_code()
+            if not shortdb.link_exists(short_code):
+                break
+        else:
+            return "<h2 style='color:red'>❌ Не удалось сгенерировать код</h2><a href='/'>Назад</a>"
+
+    password_hash = None
+    if password:
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+    shortdb.create_short_link(
+        original_url=original_url,
+        short_code=short_code,
+        password_hash=password_hash,
+    )
+
+    short_url = f"{SITE_URL}/go/{short_code}"
+
+    return f"""
+<h2>✅ Ссылка успешно создана!</h2>
+<p><strong>Оригинал:</strong> <a href="{original_url}" target="_blank">{original_url}</a></p>
+<p><strong>Короткая ссылка:</strong></p>
+<input type="text" value="{short_url}" readonly
+       style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:16px;background:#f9f9f9;"
+       onclick="this.select();this.setSelectionRange(0,99999);navigator.clipboard?.writeText(this.value);">
+<br><br>
+<a href="/" class="submit-btn" style="display:inline-block;text-decoration:none;padding:10px 20px;">🔗 Сократить ещё</a>
+"""
+
+
+@route("/api/shorten", method="POST")
+def api_shorten():
+    """API-эндпоинт: сокращение ссылки через curl/json."""
+    _get_or_create_session()
+
+    try:
+        data = request.json
+    except Exception:
+        data = None
+
+    if data:
+        original_url = data.get("url", "").strip()
+        custom_code = data.get("code", "").strip()
+        password = data.get("password")
+    else:
+        original_url = request.forms.get("url", "").strip()
+        custom_code = request.forms.get("code", "").strip()
+        password = request.forms.get("password")
+
+    if not original_url:
+        return {"ok": False, "error": "URL не указан"}
+
+    if custom_code:
+        short_code = custom_code[:10]
+        if shortdb.link_exists(short_code):
+            return {"ok": False, "error": f"Код '{short_code}' уже занят"}
+    else:
+        for _ in range(10):
+            short_code = _generate_short_code()
+            if not shortdb.link_exists(short_code):
+                break
+        else:
+            return {"ok": False, "error": "Не удалось сгенерировать код"}
+
+    password_hash = None
+    if password:
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+    shortdb.create_short_link(
+        original_url=original_url,
+        short_code=short_code,
+        password_hash=password_hash,
+    )
+
+    return {
+        "ok": True,
+        "short_url": f"{SITE_URL}/go/{short_code}",
+        "short_code": short_code,
+        "original_url": original_url,
+        "is_protected": password_hash is not None,
+    }
+
+
+@route("/go/<short_code>", method="GET")
+def redirect_short_link(short_code):
+    link = shortdb.get_short_link(short_code)
+    if not link:
+        return "<h2 style='color:red'>❌ Ссылка не найдена</h2><a href='/'>Назад</a>"
+
+    if link.password_hash:
+        return template("password_prompt.html", short_code=short_code)
+
+    shortdb.increment_clicks(short_code)
+    redirect(link.original_url)
+
+
+@route("/verify_password/<short_code>", method="POST")
+def verify_password(short_code):
+    """Проверить пароль для приватной ссылки."""
+    try:
+        data = request.json
+        password = data.get("password", "")
+    except Exception:
+        password = request.forms.get("password", "")
+
+    if not password:
+        return {"success": False, "error": "Пароль обязателен"}
+
+    link = shortdb.get_short_link(short_code)
+    if not link:
+        return {"success": False, "error": "Ссылка не найдена"}
+
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+    if link.password_hash == password_hash:
+        shortdb.increment_clicks(short_code)
+        return {
+            "success": True,
+            "redirect_url": link.original_url,
+        }
+    else:
+        return {"success": False, "error": "Неверный пароль"}
+
+
+@route("/link/<short_code>/stats", method="GET")
+def link_stats(short_code):
+    """Статистика по ссылке."""
+    stats = shortdb.get_stats(short_code)
+    if not stats:
+        return {"ok": False, "error": "Ссылка не найдена"}
+    stats["ok"] = True
+    return stats
 
 
 @route("/favicon.ico")
